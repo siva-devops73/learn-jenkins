@@ -6,6 +6,17 @@ pipeline {
       SSH = credentials('SSH')
     }
 
+    options {
+            ansiColor('xterm')
+        }
+        stages {
+            stage('Build') {
+                steps {
+                    echo '\033[42m\033[97mWhite letters, green background\033[0m'
+                }
+            }
+        }
+
     stages {
         stage('Hello-1') {
             steps {
