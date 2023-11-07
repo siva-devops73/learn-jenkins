@@ -14,7 +14,7 @@ pipeline {
 
      parameters {
         string(name: 'APP_INPUT', defaultValue: '', description: 'Just Input')
-     }.
+     }
 
 
     stages {
