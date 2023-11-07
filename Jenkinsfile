@@ -29,15 +29,15 @@ pipeline {
                 echo 'Hello Siva'
             }
         }
-    }
 
-    stage('Example Deploy') {
-         when {
-           branch 'production'
-         }
-          steps {
-            echo 'Deploying'
-          }
+        stage('Example Deploy') {
+            when {
+             branch 'production'
+            }
+            steps {
+             echo 'Deploying'
+             }
+        }
     }
 
     post {
