@@ -31,6 +31,15 @@ pipeline {
         }
     }
 
+    stage('Example Deploy') {
+         when {
+           branch 'production'
+         }
+          steps {
+            echo 'Deploying'
+          }
+    }
+
     post {
       always {
          echo 'siva kumar good morning'
