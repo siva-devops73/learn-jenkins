@@ -1,55 +1,41 @@
-properties([
-    parameters([
-        [$class: 'ChoiceParameter',
-            choiceType: 'PT_SINGLE_SELECT',
-            name: 'COMPONENT',
-            script: [
-                $class: 'GroovyScript',
-                    classpath: [],
-                    sandbox: false,
-                    script:
-                        def x = "/opt/aws-ecr-for-jenkins-param".execute()
-                        return x.in.text.tokenize()
-                ]
-        ],
-        [$class: 'CascadeChoiceParameter',
-            choiceType: 'PT_SINGLE_SELECT',
-            name: 'APP_VERSION',
-            script: [
-                $class: 'GroovyScript',
-                fallbackScript: [
-                    classpath: [],
-                    sandbox: false,
-                    script:
-                         def command = "/opt/aws-ecr-for-jenkins-param"+COMPONENT
-                         def out = command.execute().in.text.tokenize()
-
-               ]
-
-            ]
-        ]
-    ])
-])
+node('workstation') {
+  APP_VERSION = sh (script: 'aws ecr describe-images --repository-name ${COMPONENT} --query \'imageDetails[*].imageTags\' --output text | sort ', returnStdout:true).trim()
+}
 
 pipeline {
-  environment {
-         vari = ""
+  agent {
+    node {
+      label 'workstation'
+    }
   }
-  agent any
+
+  parameters {
+    string(name: 'ENV', defaultValue: 'prod', description: 'Which Env')
+  }
+
   stages {
-      stage ("Example") {
-        steps {
-         script{
-          echo 'Hello'
-          echo "${params.Env}"
-          echo "${params.Server}"
-          if (params.Server.equals("Could not get Environment from Env Param")) {
-              echo "Must be the first build after Pipeline deployment.  Aborting the build"
-              currentBuild.result = 'ABORTED'
-              return
-          }
-          echo "Crossed param validation"
-        } }
+    stage('Clone App Repo') {
+      steps {
+          git branch: 'main', url: 'http://github.com/siva-devops73/roboshop-kubernetes'
+        dir('APP') {
+          git branch: 'main', url: 'http://github.com/siva-devops73/${COMPONENT}'
+        }
       }
+    }
+
+    stage('Helm Chart Deploy') {
+      steps {
+        sh 'aws eks update-kubeconfig --name ${ENV}-eks'
+        sh 'helm upgrade -i ${COMPONENT} roboshop -f APP/helm.yaml --set image.tag=${APP_VERSION}'
+      }
+
+    }
   }
+
+  post {
+    always {
+      cleanWs()
+    }
+  }
+
 }
